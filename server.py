@@ -18,14 +18,14 @@ print("Waiting for a connection, Server Started")
 
 # State
 players = {}
-mob_states = {} # id -> {x, y, action, hp, max_hp, ...}
+mob_states_by_map = {} # map_id -> {mob_id -> {x, y, action, hp, max_hp, ...}}
 host_addr = None
 pending_damage_for_players = {} # pid -> [damage]
-pending_mob_hits = [] # [(mob_id, damage)]
+pending_mob_hits_by_map = {} # map_id -> [(mob_id, damage)]
 state_lock = threading.Lock()
 
 def threaded_client(conn, addr):
-    global host_addr, pending_damage_for_players, pending_mob_hits
+    global host_addr, pending_damage_for_players, pending_mob_hits_by_map
     
     with state_lock:
         # First connection becomes host
@@ -37,7 +37,7 @@ def threaded_client(conn, addr):
         initial_data = {
             'players': players,
             'is_host': (addr == host_addr),
-            'mobs': mob_states
+            'mobs_by_map': mob_states_by_map
         }
     conn.send(pickle.dumps(initial_data))
     
@@ -54,28 +54,36 @@ def threaded_client(conn, addr):
                 if 'player_data' in data:
                     players[addr] = data['player_data']
                     
-                # Handle Mob Updates (Only from Host)
-                if addr == host_addr and 'mob_updates' in data:
+                # Handle Mob Updates (From ANY player for their current map)
+                if 'mob_updates' in data and 'player_data' in data:
+                    player_map_id = data['player_data'].get('map_id', 0)
+                    if player_map_id not in mob_states_by_map:
+                        mob_states_by_map[player_map_id] = {}
                     for mid, mdata in data['mob_updates'].items():
-                        mob_states[mid] = mdata
+                        mob_states_by_map[player_map_id][mid] = mdata
                         
                 # Handle Mob Hits (From Clients)
-                # We need to store these and send them to the Host
-                if 'mob_hits' in data and data['mob_hits']:
-                    pending_mob_hits.extend(data['mob_hits'])
+                # Store these per map and send to players on that map
+                if 'mob_hits' in data and data['mob_hits'] and 'player_data' in data:
+                    player_map_id = data['player_data'].get('map_id', 0)
+                    if player_map_id not in pending_mob_hits_by_map:
+                        pending_mob_hits_by_map[player_map_id] = []
+                    pending_mob_hits_by_map[player_map_id].extend(data['mob_hits'])
+                
+                # Get player's current map
+                current_map_id = players[addr].get('map_id', 0) if addr in players else 0
                 
                 # Prepare reply
                 reply = {
                     'players': players,
-                    'mobs': mob_states,
+                    'mobs': mob_states_by_map.get(current_map_id, {}),  # Only send mobs for current map
                     'is_host': (addr == host_addr)
                 }
                 
-                # If this is the Host, send them the pending hits and clear the list
-                if addr == host_addr:
-                    if pending_mob_hits:
-                        reply['remote_hits'] = list(pending_mob_hits) # Copy
-                        pending_mob_hits.clear() # Clear after sending
+                # Send pending mob hits for this player's map to them
+                if current_map_id in pending_mob_hits_by_map and pending_mob_hits_by_map[current_map_id]:
+                    reply['remote_hits'] = list(pending_mob_hits_by_map[current_map_id])
+                    pending_mob_hits_by_map[current_map_id].clear()
             
             # If Host, process player hits and store them for the target clients
             if addr == host_addr and 'player_hits' in data:

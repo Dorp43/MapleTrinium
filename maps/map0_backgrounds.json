@@ -7,40 +7,56 @@
       "scroll_speed": 1.0
     },
     {
-      "background_id": 3,
-      "y": 648,
-      "layer_index": 4,
-      "scroll_speed": 1.0,
-      "repeat": true,
-      "x": 3
-    },
-    {
-      "background_id": 7,
-      "y": 708,
-      "layer_index": 4,
-      "scroll_speed": 1.0,
-      "repeat": true,
-      "x": 3
-    },
-    {
       "background_id": 2,
-      "y": 293,
+      "y": 263,
       "layer_index": 0,
       "scroll_speed": 1.0,
       "repeat": true,
-      "x": 2277,
+      "x": 3,
       "animated": true,
-      "animation_speed": 20.0,
-      "start_y": 305
+      "animation_speed": 20.0
     },
     {
-      "background_id": 4,
-      "y": 380,
+      "background_id": 3,
+      "y": 624,
       "layer_index": 0,
       "scroll_speed": 1.0,
       "repeat": false,
-      "x": 968
+      "x": 2,
+      "animated": false,
+      "animation_speed": 20.0
+    },
+    {
+      "background_id": 4,
+      "y": 306,
+      "layer_index": 0,
+      "scroll_speed": 1.0,
+      "repeat": false,
+      "x": 1162,
+      "animated": false,
+      "animation_speed": 20.0
+    },
+    {
+      "background_id": 5,
+      "y": 736,
+      "layer_index": 0,
+      "scroll_speed": 1.0,
+      "repeat": false,
+      "x": 1,
+      "animated": false,
+      "animation_speed": 20.0
+    },
+    {
+      "background_id": 6,
+      "y": 738,
+      "layer_index": 0,
+      "scroll_speed": 1.0,
+      "repeat": false,
+      "x": 1224,
+      "animated": false,
+      "animation_speed": 20.0
     }
   ],
-  "global_start_y": 317
+  "global_start_y": 308,
+  "global_end_y": 1033
 }
