@@ -1,5 +1,6 @@
 
 import pygame
+import random
 
 class Projectile(pygame.sprite.Sprite):
     def __init__(self, x, y, direction, speed, isRotate, projectile_name, damage, hit_count):
@@ -26,6 +27,10 @@ class Projectile(pygame.sprite.Sprite):
         self.direction = direction
         self.mobs_hitted = pygame.sprite.Group()
         self.hit_count = hit_count
+        
+        # Critical hit settings
+        self.crit_chance = 0.15  # 15% critical hit chance
+        self.crit_multiplier = 1.5  # 1.5x damage on critical hits
 
         
 
@@ -38,9 +43,19 @@ class Projectile(pygame.sprite.Sprite):
             if pygame.sprite.spritecollide(mob, player.projectiles_group, False):
                 if mob.alive and mob not in self.mobs_hitted and len(self.mobs_hitted) != self.hit_count:
                     self.mobs_hitted.add(mob)
-                    mob.hit(25, player)
+                    
+                    # Add damage variance (70% to 100% of base damage)
+                    damage_variance = random.uniform(0.7, 1.0)
+                    base_damage = int(self.damage * damage_variance)
+                    
+                    # Calculate critical hit
+                    is_critical = random.random() < self.crit_chance
+                    damage = int(base_damage * self.crit_multiplier) if is_critical else base_damage
+                    
+                    # Apply damage with critical flag
+                    mob.hit(damage, player, is_critical=is_critical)
                     if hit_list is not None:
-                        hit_list.append((mob.id, 25))
+                        hit_list.append((mob.id, damage))
                     if self.hit_count == 1:
                         self.kill()
         #check if projectile has gone off range

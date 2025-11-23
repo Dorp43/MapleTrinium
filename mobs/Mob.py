@@ -3,6 +3,7 @@ import os
 import random
 import uuid
 from entities.HealthBar import HealthBar
+from entities.DamageNumber import DamageNumber
 
 FLOOR = 465
 
@@ -86,6 +87,9 @@ class Mob(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         self.health_bar = HealthBar(self, screen, "red")
+        
+        # Damage numbers
+        self.damage_numbers = []
 
 
 
@@ -94,6 +98,12 @@ class Mob(pygame.sprite.Sprite):
         self.update_animation()
         self.check_alive()
         self.handle_movement()
+        
+        # Update damage numbers
+        for dmg_num in self.damage_numbers[:]:
+            dmg_num.update(16)  # Assuming ~60 FPS, dt = 16ms
+            if not dmg_num.alive:
+                self.damage_numbers.remove(dmg_num)
 
     def client_update(self, camera_x=0, camera_y=0):
         """Update method for clients (non-host). Updates visuals but not physics."""
@@ -491,13 +501,18 @@ class Mob(pygame.sprite.Sprite):
 
 
 
-    def hit(self, damage, player):
+    def hit(self, damage, player, is_critical=False):
         self.health -= damage
         if player:
             self.has_attacker = True
             self.attacker = player
         self.play_sound("mob","hit")
         self.update_action(3)
+        
+        # Spawn damage number above mob (use critical sprites if critical hit)
+        damage_type = 'critical' if is_critical else 'mob'
+        dmg_num = DamageNumber(damage, self.rect.centerx, self.rect.top - 20, damage_type)
+        self.damage_numbers.append(dmg_num)
 
     
     def attack(self):
@@ -521,6 +536,10 @@ class Mob(pygame.sprite.Sprite):
         screen_x = self.rect.x - camera_x
         screen_y = self.rect.y - camera_y
         self.screen.blit(pygame.transform.flip(self.image, self.flip, False), (screen_x, screen_y))
+        
+        # Draw damage numbers
+        for dmg_num in self.damage_numbers:
+            dmg_num.draw(self.screen, camera_x, camera_y)
 
 
     def play_sound(self, dir_name, sound):

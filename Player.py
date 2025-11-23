@@ -4,6 +4,7 @@ import os
 from skills.Skill import Skill
 from skills.Projectile import Projectile
 from entities.HealthBar import HealthBar
+from entities.DamageNumber import DamageNumber
 
 
 class Player(pygame.sprite.Sprite):
@@ -83,6 +84,9 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         self.health_bar = HealthBar(self, screen, "green")
+        
+        # Damage numbers
+        self.damage_numbers = []
 
 
     def update(self, camera_x=0, camera_y=0):
@@ -90,6 +94,12 @@ class Player(pygame.sprite.Sprite):
         self.update_animation()
         self.handle_cooldown()
         self.check_alive()
+        
+        # Update damage numbers
+        for dmg_num in self.damage_numbers[:]:
+            dmg_num.update(16)  # Assuming ~60 FPS, dt = 16ms
+            if not dmg_num.alive:
+                self.damage_numbers.remove(dmg_num)
        
 
     def move(self, GRAVITY):
@@ -490,6 +500,10 @@ class Player(pygame.sprite.Sprite):
                 self.pending_damage = []
             self.pending_damage.append(damage)
             
+            # Spawn damage number above player
+            dmg_num = DamageNumber(damage, self.rect.centerx, self.rect.top - 20, 'player')
+            self.damage_numbers.append(dmg_num)
+            
     
     def check_alive(self):
         if self.health <= 0:
@@ -529,6 +543,10 @@ class Player(pygame.sprite.Sprite):
                 self.screen.blit(pygame.transform.flip(copy_of_image, self.flip, False), (screen_x, screen_y))
         else:
                 self.screen.blit(pygame.transform.flip(self.image, self.flip, False), (screen_x, screen_y))
+        
+        # Draw damage numbers
+        for dmg_num in self.damage_numbers:
+            dmg_num.draw(self.screen, camera_x, camera_y)
  
 
 
