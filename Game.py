@@ -709,8 +709,10 @@ class Game:
         """Start a fade transition to a new map."""
         if not self.transitioning:
             # Save current player position before transition
+            # Add upward offset to prevent spawning below collision lines
+            PORTAL_SPAWN_OFFSET_Y = 100  # Spawn 100 pixels above portal position
             for player in self.players:
-                self.transition_player_pos = (player.rect.x, player.rect.y)
+                self.transition_player_pos = (player.rect.x, player.rect.y - PORTAL_SPAWN_OFFSET_Y)
                 break
             
             self.transitioning = True
