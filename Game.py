@@ -287,11 +287,7 @@ class Game:
                         mob.client_update(self.camera_x, self.camera_y)
                         mob.draw(self.camera_x, self.camera_y)
 
-                # Update and draw portals
-                if self.map:
-                    portals = self.map.get_portals()
-                    for portal in portals:
-                        portal.update(dt)
+
 
                 for player in self.players:
                     # Update camera to follow player (before updating player so health bar uses correct camera)
@@ -567,6 +563,13 @@ class Game:
                                         # Update image
                                         if mob.action < len(mob.animation_list) and mob.frame_index < len(mob.animation_list[mob.action]):
                                             mob.image = mob.animation_list[mob.action][mob.frame_index]
+
+            # Draw portals on top of everything (player, mobs, remote players)
+            if self.map:
+                portals = self.map.get_portals()
+                for portal in portals:
+                    portal.update(dt)
+                self.map.draw_portals(self.screen, self.camera_x, self.camera_y)
 
             # draws cursor
             # Scale mouse position from display coordinates to virtual coordinates

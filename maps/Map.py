@@ -304,7 +304,7 @@ class Map:
         return 0, self.screen.get_width(), 0, self.screen.get_height()
 
     def draw(self, surface, camera_x=0, camera_y=0):
-        """Render backgrounds first, then the tile grid, then portals onto the provided surface with camera offset."""
+        """Render backgrounds first, then the tile grid onto the provided surface with camera offset."""
         # Draw background layers (back to front, sorted by layer index)
         self.draw_backgrounds(surface, camera_x, camera_y)
         
@@ -325,8 +325,6 @@ class Map:
                             screen_y + img.get_height() >= 0 and screen_y < surface.get_height()):
                             surface.blit(img, (screen_x, screen_y))
         
-        # Draw portals (above tiles, below player)
-        self.draw_portals(surface, camera_x, camera_y)
 
     def load_mobs_from_csv(self, map_id: int):
         """
