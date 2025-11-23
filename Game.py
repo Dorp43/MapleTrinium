@@ -274,17 +274,17 @@ class Game:
                 self.draw_bg()
 
                 # Mob Logic
-                # Only Host updates mob physics/AI
-                if self.is_host:
+                # In multiplayer, each player updates mobs on their current map
+                # In singleplayer, always update mobs
+                if not self.network or self.is_host:
+                    # Singleplayer or host in multiplayer - always update
                     for mob in self.mobs:
                         mob.update(self.camera_x, self.camera_y)
                         mob.draw(self.camera_x, self.camera_y)
-                else:
-                    # Clients just draw mobs based on server data (updated in network block)
-                    # But we still need to draw them
+                elif self.network:
+                    # Client in multiplayer - also update mobs (each player manages their map's mobs)
                     for mob in self.mobs:
-                        # mob.update() # Don't run update logic on client
-                        mob.client_update(self.camera_x, self.camera_y)
+                        mob.update(self.camera_x, self.camera_y)
                         mob.draw(self.camera_x, self.camera_y)
 
 
@@ -383,20 +383,19 @@ class Game:
                             'skills': skills_data
                         }
                         
-                        # Prepare Mob Data (If Host)
+                        # Prepare Mob Data (All players send updates for their current map)
                         mob_updates = {}
-                        if self.is_host:
-                            for mob in self.mobs:
-                                if mob.alive: # Only send alive mobs? Or send dead state?
-                                    mob_updates[mob.id] = {
-                                        'x': mob.rect.x,
-                                        'y': mob.rect.y,
-                                        'action': mob.action,
-                                        'frame_index': mob.frame_index,
-                                        'flip': mob.flip,
-                                        'hp': mob.health,
-                                        'max_hp': mob.max_health
-                                    }
+                        for mob in self.mobs:
+                            if mob.alive: # Only send alive mobs? Or send dead state?
+                                mob_updates[mob.id] = {
+                                    'x': mob.rect.x,
+                                    'y': mob.rect.y,
+                                    'action': mob.action,
+                                    'frame_index': mob.frame_index,
+                                    'flip': mob.flip,
+                                    'hp': mob.health,
+                                    'max_hp': mob.max_health
+                                }
                         
                         # Send and receive
                         
@@ -426,10 +425,9 @@ class Game:
                         packet = {
                             'player_data': player_data,
                             'mob_hits': self.frame_hits, # Send hits to server
-                            'player_hits': player_hits # Host sends who got hit
+                            'player_hits': player_hits, # Host sends who got hit
+                            'mob_updates': mob_updates # All players send mob updates for their map
                         }
-                        if self.is_host:
-                            packet['mob_updates'] = mob_updates
                             
                         server_reply = self.network.send(packet)
                         
